@@ -1,5 +1,4 @@
 # Created by https://www.toptal.com/developers/gitignore/api/go
-# Edit at https://www.toptal.com/developers/gitignore?templates=go
 *.exe
 *.exe~
 *.dll
@@ -11,3 +10,4 @@ go.work
 # End of https://www.toptal.com/developers/gitignore/api/go
 
 .env
+*.txt
