@@ -2,15 +2,22 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/codepnw/go-starter-kit/pkg/utils/validate"
 	"github.com/joho/godotenv"
 )
 
+const (
+	AccessTokenDuration  = time.Minute * 30
+	RefreshTokenDuration = time.Hour * 24 * 7
+)
+
 type EnvConfig struct {
 	APP AppConfig `envPrefix:"APP_"`
 	DB  DBConfig  `envPrefix:"DB_"`
+	JWT JWTConfig `envPrefix:"JWT_"`
 }
 
 type AppConfig struct {
@@ -27,6 +34,12 @@ type DBConfig struct {
 	SSLMode  string `env:"SSL_MODE" envDefault:"disable"`
 }
 
+type JWTConfig struct {
+	AppName    string `env:"APP_NAME" envDefault:"Go Starter Kit"`
+	SecretKey  string `env:"ACCESS_KEY" validate:"required"`
+	RefreshKey string `env:"REFRESH_KEY" validate:"required"`
+}
+
 func LoadConfig(path string) (*EnvConfig, error) {
 	// Load .env file
 	if err := godotenv.Load(path); err != nil {
@@ -38,7 +51,7 @@ func LoadConfig(path string) (*EnvConfig, error) {
 	if err := env.Parse(cfg); err != nil {
 		return nil, fmt.Errorf("parse env failed: %w", err)
 	}
-	
+
 	// Validate config
 	if err := validate.Struct(cfg); err != nil {
 		return nil, fmt.Errorf("validate env failed: %w", err)
