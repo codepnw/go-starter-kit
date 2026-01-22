@@ -36,7 +36,7 @@ type DBConfig struct {
 
 type JWTConfig struct {
 	AppName    string `env:"APP_NAME" envDefault:"Go Starter Kit"`
-	SecretKey  string `env:"ACCESS_KEY" validate:"required"`
+	SecretKey  string `env:"SECRET_KEY" validate:"required"`
 	RefreshKey string `env:"REFRESH_KEY" validate:"required"`
 }
 

@@ -4,8 +4,9 @@ import (
 	"log"
 
 	"github.com/codepnw/go-starter-kit/internal/config"
-	"github.com/codepnw/go-starter-kit/internal/router"
+	"github.com/codepnw/go-starter-kit/internal/server"
 	"github.com/codepnw/go-starter-kit/pkg/database"
+	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwt"
 )
 
 const envPath = ".env"
@@ -16,20 +17,27 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	// Connect Database
 	db, err := database.ConnectPostgres(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	
-	// Start Server
-	err = router.Start(&router.RouterConfig{
-		EnvConfig: cfg,
-		DB:        db,
-	})
+
+	// JWT Token
+	token, err := jwttoken.NewJWTToken(cfg.JWT.AppName, cfg.JWT.SecretKey, cfg.JWT.RefreshKey)
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Server Config
+	s := server.NewServer(&server.ServerConfig{
+		DB:    db,
+		Token: token,
+	})
+	// Server Run
+	if err := s.SetupRouter().Run(cfg.GetAppAddress()); err != nil {
 		log.Fatal(err)
 	}
 }
