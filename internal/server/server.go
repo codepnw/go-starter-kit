@@ -13,8 +13,9 @@ import (
 )
 
 type ServerConfig struct {
-	DB    *sql.DB
-	Token *jwttoken.JWTToken
+	DB         *sql.DB
+	Token      *jwttoken.JWTToken
+	Middleware *middleware.Middleware
 }
 
 type server struct {
@@ -29,7 +30,7 @@ func (s *server) SetupRouter() *gin.Engine {
 	r := gin.New()
 
 	r.Use(gin.Recovery())
-	r.Use(middleware.Logger())
+	r.Use(s.cfg.Middleware.Logger())
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},

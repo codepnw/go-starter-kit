@@ -9,9 +9,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type contextKey string
+
 const (
+	// JWT token duration
 	AccessTokenDuration  = time.Minute * 30
 	RefreshTokenDuration = time.Hour * 24 * 7
+
+	// Context keys
+	ContextUserClaimsKey contextKey = "ctx-user-claims"
+	ContextUserIDKey     contextKey = "ctx-user-id"
 )
 
 type EnvConfig struct {

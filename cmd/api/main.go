@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/codepnw/go-starter-kit/internal/config"
+	"github.com/codepnw/go-starter-kit/internal/middleware"
 	"github.com/codepnw/go-starter-kit/internal/server"
 	"github.com/codepnw/go-starter-kit/pkg/database"
 	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwt"
@@ -31,10 +32,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Middleware
+	mid := middleware.InitMiddleware(token)
+
 	// Server Config
 	s := server.NewServer(&server.ServerConfig{
-		DB:    db,
-		Token: token,
+		DB:         db,
+		Token:      token,
+		Middleware: mid,
 	})
 	// Server Run
 	if err := s.SetupRouter().Run(cfg.GetAppAddress()); err != nil {
