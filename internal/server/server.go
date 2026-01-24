@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	userhandler "github.com/codepnw/go-starter-kit/internal/features/user/handler"
+	userrepository "github.com/codepnw/go-starter-kit/internal/features/user/repository"
+	userservice "github.com/codepnw/go-starter-kit/internal/features/user/service"
 	"github.com/codepnw/go-starter-kit/internal/middleware"
 	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwt"
 	"github.com/codepnw/go-starter-kit/pkg/utils/response"
@@ -18,16 +21,18 @@ type ServerConfig struct {
 	Middleware *middleware.Middleware
 }
 
-type server struct {
-	cfg *ServerConfig
+type Server struct {
+	cfg    *ServerConfig
+	router *gin.Engine
 }
 
-func NewServer(cfg *ServerConfig) *server {
-	return &server{cfg: cfg}
-}
-
-func (s *server) SetupRouter() *gin.Engine {
+func NewServer(cfg *ServerConfig) *Server {
 	r := gin.New()
+
+	s := &Server{
+		cfg:    cfg,
+		router: r,
+	}
 
 	r.Use(gin.Recovery())
 	r.Use(s.cfg.Middleware.Logger())
@@ -46,7 +51,20 @@ func (s *server) SetupRouter() *gin.Engine {
 
 	s.registerUserRoutes()
 
-	return r
+	return s
 }
 
-func (s *server) registerUserRoutes() {}
+func (s *Server) Start(addr string) error {
+	return s.router.Run(addr)
+}
+
+func (s *Server) registerUserRoutes() {
+	repo := userrepository.NewUserRepository(s.cfg.DB)
+	service := userservice.NewUserService(s.cfg.Token, repo)
+	handler := userhandler.NewUserHandler(service)
+
+	users := s.router.Group("/users")
+
+	users.POST("/register", handler.Register)
+	users.POST("/login", handler.Login)
+}

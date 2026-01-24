@@ -42,7 +42,7 @@ func main() {
 		Middleware: mid,
 	})
 	// Server Run
-	if err := s.SetupRouter().Run(cfg.GetAppAddress()); err != nil {
+	if err := s.Start(cfg.GetAppAddress()); err != nil {
 		log.Fatal(err)
 	}
 }
