@@ -19,6 +19,8 @@ const (
 	// Context keys
 	ContextUserClaimsKey contextKey = "ctx-user-claims"
 	ContextUserIDKey     contextKey = "ctx-user-id"
+
+	ContextTimeout = time.Second * 10
 )
 
 type EnvConfig struct {
