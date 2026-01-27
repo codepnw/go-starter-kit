@@ -5,37 +5,53 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/codepnw/go-starter-kit/internal/config"
 	userhandler "github.com/codepnw/go-starter-kit/internal/features/user/handler"
 	userrepository "github.com/codepnw/go-starter-kit/internal/features/user/repository"
 	userservice "github.com/codepnw/go-starter-kit/internal/features/user/service"
 	"github.com/codepnw/go-starter-kit/internal/middleware"
+	"github.com/codepnw/go-starter-kit/pkg/database"
 	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwt"
 	"github.com/codepnw/go-starter-kit/pkg/utils/response"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-type ServerConfig struct {
-	DB         *sql.DB
-	Token      *jwttoken.JWTToken
-	Middleware *middleware.Middleware
-}
-
 type Server struct {
-	cfg    *ServerConfig
+	db     *sql.DB
 	router *gin.Engine
+	token  *jwttoken.JWTToken
+	mid    *middleware.Middleware
+	tx     database.TxManager
 }
 
-func NewServer(cfg *ServerConfig) *Server {
+func NewServer(cfg *config.EnvConfig, db *sql.DB) (*Server, error) {
 	r := gin.New()
 
-	s := &Server{
-		cfg:    cfg,
-		router: r,
+	// JWT Token
+	token, err := jwttoken.NewJWTToken(cfg.JWT.AppName, cfg.JWT.SecretKey, cfg.JWT.RefreshKey)
+	if err != nil {
+		return nil, err
 	}
 
+	// Middleware
+	mid := middleware.InitMiddleware(token)
+
+	// DB Transaction
+	tx := database.NewDBTransaction(db)
+
+	// Denpendency Injection
+	s := &Server{
+		db:     db,
+		router: r,
+		token:  token,
+		mid:    mid,
+		tx:     tx,
+	}
+
+	// Gin Middleware
 	r.Use(gin.Recovery())
-	r.Use(s.cfg.Middleware.Logger())
+	r.Use(s.mid.Logger())
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
@@ -44,23 +60,27 @@ func NewServer(cfg *ServerConfig) *Server {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-
-	r.GET("/health", func(c *gin.Context) {
-		response.ResponseSuccess(c, http.StatusOK, "Go-Starter-Kit Running...")
-	})
-
+	
+	// Register Routes
+	s.registerHealthRoutes()
 	s.registerUserRoutes()
 
-	return s
+	return s, nil
 }
 
 func (s *Server) Start(addr string) error {
 	return s.router.Run(addr)
 }
 
+func (s *Server) registerHealthRoutes() {
+	s.router.GET("/health", func(c *gin.Context) {
+		response.ResponseSuccess(c, http.StatusOK, "Go Starter Kit Running...")
+	})
+}
+
 func (s *Server) registerUserRoutes() {
-	repo := userrepository.NewUserRepository(s.cfg.DB)
-	service := userservice.NewUserService(s.cfg.Token, repo)
+	repo := userrepository.NewUserRepository(s.db)
+	service := userservice.NewUserService(s.tx, s.token, repo)
 	handler := userhandler.NewUserHandler(service)
 
 	users := s.router.Group("/users")
