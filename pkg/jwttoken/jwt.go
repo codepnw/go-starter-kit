@@ -10,17 +10,25 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type JWTToken struct {
+//go:generate mockgen -source=jwt.go -destination=jwt_mock.go -package=jwtToken
+type JWTToken interface {
+	GenerateAccessToken(u *user.User) (string, error)
+	GenerateRefreshToken(u *user.User) (string, error)
+	VerifyAccessToken(tokenStr string) (*UserClaims, error)
+	VerifyRefreshToken(tokenStr string) (*UserClaims, error)
+}
+
+type token struct {
 	appName    string
 	secretKey  string
 	refreshKey string
 }
 
-func NewJWTToken(appName, secretKey, refreshKey string) (*JWTToken, error) {
+func NewJWTToken(appName, secretKey, refreshKey string) (JWTToken, error) {
 	if secretKey == "" || refreshKey == "" {
 		return nil, errors.New("secret & refresh key is required")
 	}
-	return &JWTToken{
+	return &token{
 		appName:    appName,
 		secretKey:  secretKey,
 		refreshKey: refreshKey,
@@ -35,15 +43,15 @@ type UserClaims struct {
 
 // ------------- Generate Token ----------------
 
-func (j *JWTToken) GenerateAccessToken(u *user.User) (string, error) {
+func (j *token) GenerateAccessToken(u *user.User) (string, error) {
 	return j.generateToken(j.secretKey, u, config.AccessTokenDuration)
 }
 
-func (j *JWTToken) GenerateRefreshToken(u *user.User) (string, error) {
+func (j *token) GenerateRefreshToken(u *user.User) (string, error) {
 	return j.generateToken(j.refreshKey, u, config.RefreshTokenDuration)
 }
 
-func (j *JWTToken) generateToken(key string, u *user.User, duration time.Duration) (string, error) {
+func (j *token) generateToken(key string, u *user.User, duration time.Duration) (string, error) {
 	claims := &UserClaims{
 		UserID: u.ID,
 		Email:  u.Email,
@@ -65,22 +73,22 @@ func (j *JWTToken) generateToken(key string, u *user.User, duration time.Duratio
 
 // ------------- Verify Token ----------------
 
-func (j *JWTToken) VerifyAccessToken(tokenStr string) (*UserClaims, error) {
+func (j *token) VerifyAccessToken(tokenStr string) (*UserClaims, error) {
 	return j.verifyToken(j.secretKey, tokenStr)
 }
 
-func (j *JWTToken) VerifyRefreshToken(tokenStr string) (*UserClaims, error) {
+func (j *token) VerifyRefreshToken(tokenStr string) (*UserClaims, error) {
 	return j.verifyToken(j.refreshKey, tokenStr)
 }
 
-func (j *JWTToken) verifyToken(key, tokenStr string) (*UserClaims, error) {
+func (j *token) verifyToken(key, tokenStr string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(t *jwt.Token) (any, error) {
 		return []byte(key), nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("parse token failed: %w", err)
 	}
-	
+
 	claims, ok := token.Claims.(*UserClaims)
 	if !ok {
 		return nil, fmt.Errorf("type assertion claims failed")

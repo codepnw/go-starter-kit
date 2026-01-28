@@ -11,7 +11,7 @@ import (
 	"github.com/codepnw/go-starter-kit/internal/features/user"
 	userrepository "github.com/codepnw/go-starter-kit/internal/features/user/repository"
 	"github.com/codepnw/go-starter-kit/pkg/database"
-	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwt"
+	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwttoken"
 	"github.com/codepnw/go-starter-kit/pkg/utils/password"
 )
 
@@ -22,11 +22,11 @@ type UserService interface {
 
 type userService struct {
 	tx    database.TxManager
-	token *jwttoken.JWTToken
+	token jwttoken.JWTToken
 	repo  userrepository.UserRepository
 }
 
-func NewUserService(tx database.TxManager, token *jwttoken.JWTToken, repo userrepository.UserRepository) UserService {
+func NewUserService(tx database.TxManager, token jwttoken.JWTToken, repo userrepository.UserRepository) UserService {
 	return &userService{
 		tx:    tx,
 		token: token,

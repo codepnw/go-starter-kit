@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/codepnw/go-starter-kit/internal/config"
-	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwt"
+	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwttoken"
 )
 
 func GetUserFromContext(ctx context.Context) (*jwttoken.UserClaims, error) {

@@ -11,7 +11,7 @@ import (
 	userservice "github.com/codepnw/go-starter-kit/internal/features/user/service"
 	"github.com/codepnw/go-starter-kit/internal/middleware"
 	"github.com/codepnw/go-starter-kit/pkg/database"
-	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwt"
+	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwttoken"
 	"github.com/codepnw/go-starter-kit/pkg/utils/response"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ import (
 type Server struct {
 	db     *sql.DB
 	router *gin.Engine
-	token  *jwttoken.JWTToken
+	token  jwttoken.JWTToken
 	mid    *middleware.Middleware
 	tx     database.TxManager
 }
@@ -60,7 +60,7 @@ func NewServer(cfg *config.EnvConfig, db *sql.DB) (*Server, error) {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	
+
 	// Register Routes
 	s.registerHealthRoutes()
 	s.registerUserRoutes()

@@ -9,16 +9,16 @@ import (
 	"time"
 
 	"github.com/codepnw/go-starter-kit/internal/config"
-	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwt"
+	jwttoken "github.com/codepnw/go-starter-kit/pkg/jwttoken"
 	"github.com/codepnw/go-starter-kit/pkg/utils/response"
 	"github.com/gin-gonic/gin"
 )
 
 type Middleware struct {
-	token *jwttoken.JWTToken
+	token jwttoken.JWTToken
 }
 
-func InitMiddleware(token *jwttoken.JWTToken) *Middleware {
+func InitMiddleware(token jwttoken.JWTToken) *Middleware {
 	return &Middleware{token: token}
 }
 
@@ -35,17 +35,17 @@ func (m *Middleware) Authorized() gin.HandlerFunc {
 			response.ResponseError(c, http.StatusUnauthorized, errors.New("invalid token format"))
 			return
 		}
-		
+
 		claims, err := m.token.VerifyAccessToken(args[1])
 		if err != nil {
 			response.ResponseError(c, http.StatusUnauthorized, err)
 			return
 		}
-		
+
 		ctx := c.Request.Context()
 		ctx = context.WithValue(ctx, config.ContextUserClaimsKey, claims)
 		ctx = context.WithValue(ctx, config.ContextUserIDKey, claims.UserID)
-		
+
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	}

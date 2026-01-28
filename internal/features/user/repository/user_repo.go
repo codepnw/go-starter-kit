@@ -7,6 +7,7 @@ import (
 	"github.com/codepnw/go-starter-kit/internal/features/user"
 )
 
+//go:generate mockgen -source=user_repo.go -destination=user_repo_mock.go -package=userrepository
 type UserRepository interface {
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
 	FindUserByEmail(ctx context.Context, email string) (*user.User, error)
