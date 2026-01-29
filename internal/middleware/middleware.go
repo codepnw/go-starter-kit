@@ -27,18 +27,21 @@ func (m *Middleware) Authorized() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			response.ResponseError(c, http.StatusUnauthorized, errors.New("header is misstion"))
+			c.Abort()
 			return
 		}
 
 		args := strings.Fields(authHeader)
 		if len(args) != 2 || args[0] != "Bearer" {
 			response.ResponseError(c, http.StatusUnauthorized, errors.New("invalid token format"))
+			c.Abort()
 			return
 		}
 
 		claims, err := m.token.VerifyAccessToken(args[1])
 		if err != nil {
 			response.ResponseError(c, http.StatusUnauthorized, err)
+			c.Abort()
 			return
 		}
 

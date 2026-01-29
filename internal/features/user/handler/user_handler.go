@@ -62,6 +62,53 @@ func (h *userHandler) Login(c *gin.Context) {
 		}
 		return
 	}
-	
+
 	response.ResponseSuccess(c, http.StatusOK, resp)
+}
+
+func (h *userHandler) RefreshToken(c *gin.Context) {
+	req := new(RefreshTokenReq)
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		response.ResponseError(c, http.StatusBadRequest, err)
+		return
+	}
+
+	resp, err := h.service.RefreshToken(c.Request.Context(), req.RefreshToken)
+	if err != nil {
+		switch err {
+		case errs.ErrTokenNotFound:
+			response.ResponseError(c, http.StatusNotFound, err)
+		case errs.ErrTokenRevoked:
+			response.ResponseError(c, http.StatusBadRequest, err)
+		case errs.ErrTokenExpires:
+			response.ResponseError(c, http.StatusBadRequest, err)
+		default:
+			response.ResponseError(c, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	response.ResponseSuccess(c, http.StatusOK, resp)
+}
+
+func (h *userHandler) Logout(c *gin.Context) {
+	req := new(RefreshTokenReq)
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		response.ResponseError(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := h.service.Logout(c.Request.Context(), req.RefreshToken); err != nil {
+		switch err {
+		case errs.ErrTokenNotFound:
+			response.ResponseError(c, http.StatusNotFound, err)
+		default:
+			response.ResponseError(c, http.StatusInternalServerError, err)
+		}
+		return
+	}
+	
+	response.ResponseSuccess(c, http.StatusNoContent, nil)
 }

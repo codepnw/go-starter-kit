@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/codepnw/go-starter-kit/internal/auth"
 	"github.com/codepnw/go-starter-kit/internal/errs"
 	"github.com/codepnw/go-starter-kit/internal/features/user"
 	userrepository "github.com/codepnw/go-starter-kit/internal/features/user/repository"
@@ -228,6 +229,178 @@ func TestLogin(t *testing.T) {
 		} else {
 			assert.NoError(t, err)
 			assert.NotEmpty(t, resp)
+		}
+	}
+}
+
+func TestRefreshToken(t *testing.T) {
+	type testCase struct {
+		name        string
+		token       string
+		mockFn      func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string)
+		expectedErr error
+	}
+
+	testCases := []testCase{
+		{
+			name:  "success",
+			token: "mock-refresh-token",
+			mockFn: func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string) {
+				mockRepo.EXPECT().ValidateRefreshToken(gomock.Any(), token).Return(nil).Times(1)
+
+				mockUser := &user.User{ID: "mock-uuid-1", Email: "mock@mail.com"}
+				mockRepo.EXPECT().FindUserByID(gomock.Any(), gomock.Any()).Return(mockUser, nil).Times(1)
+
+				mockTx.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(tx *sql.Tx) error) error {
+						return fn(nil)
+					},
+				).Times(1)
+
+				mockRepo.EXPECT().RevokedRefreshTokenTx(gomock.Any(), nil, token).Return(nil).Times(1)
+
+				mockToken.EXPECT().GenerateAccessToken(mockUser).Return("mock-access-token", nil).Times(1)
+				mockToken.EXPECT().GenerateRefreshToken(mockUser).Return("mock-refresh-token", nil).Times(1)
+
+				mockRepo.EXPECT().InsertRefreshTokenTx(gomock.Any(), nil, gomock.Any()).Return(nil).Times(1)
+			},
+			expectedErr: nil,
+		},
+		{
+			name:  "fail validate token",
+			token: "mock-refresh-token",
+			mockFn: func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string) {
+				mockRepo.EXPECT().ValidateRefreshToken(gomock.Any(), token).Return(ErrDB).Times(1)
+			},
+			expectedErr: ErrDB,
+		},
+		{
+			name:  "fail find user",
+			token: "mock-refresh-token",
+			mockFn: func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string) {
+				mockRepo.EXPECT().ValidateRefreshToken(gomock.Any(), token).Return(nil).Times(1)
+
+				mockRepo.EXPECT().FindUserByID(gomock.Any(), gomock.Any()).Return(nil, ErrDB).Times(1)
+			},
+			expectedErr: ErrDB,
+		},
+		{
+			name:  "fail revoked token",
+			token: "mock-refresh-token",
+			mockFn: func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string) {
+				mockRepo.EXPECT().ValidateRefreshToken(gomock.Any(), token).Return(nil).Times(1)
+
+				mockUser := &user.User{ID: "mock-uuid-1", Email: "mock@mail.com"}
+				mockRepo.EXPECT().FindUserByID(gomock.Any(), gomock.Any()).Return(mockUser, nil).Times(1)
+
+				mockTx.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(tx *sql.Tx) error) error {
+						return fn(nil)
+					},
+				).Times(1)
+
+				mockRepo.EXPECT().RevokedRefreshTokenTx(gomock.Any(), nil, token).Return(ErrDB).Times(1)
+			},
+			expectedErr: ErrDB,
+		},
+		{
+			name:  "fail insert new token",
+			token: "mock-refresh-token",
+			mockFn: func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string) {
+				mockRepo.EXPECT().ValidateRefreshToken(gomock.Any(), token).Return(nil).Times(1)
+
+				mockUser := &user.User{ID: "mock-uuid-1", Email: "mock@mail.com"}
+				mockRepo.EXPECT().FindUserByID(gomock.Any(), gomock.Any()).Return(mockUser, nil).Times(1)
+
+				mockTx.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(tx *sql.Tx) error) error {
+						return fn(nil)
+					},
+				).Times(1)
+
+				mockRepo.EXPECT().RevokedRefreshTokenTx(gomock.Any(), nil, token).Return(nil).Times(1)
+
+				mockToken.EXPECT().GenerateAccessToken(mockUser).Return("mock-access-token", nil).Times(1)
+				mockToken.EXPECT().GenerateRefreshToken(mockUser).Return("mock-refresh-token", nil).Times(1)
+
+				mockRepo.EXPECT().InsertRefreshTokenTx(gomock.Any(), nil, gomock.Any()).Return(ErrDB).Times(1)
+			},
+			expectedErr: ErrDB,
+		},
+	}
+
+	for _, tc := range testCases {
+		mockToken, mockTx, mockRepo, service := setup(t)
+
+		tc.mockFn(mockTx, mockToken, mockRepo, tc.token)
+
+		ctx := context.Background()
+		ctx = auth.SetContextUserID(ctx, "mock-uuid-1")
+
+		resp, err := service.RefreshToken(ctx, tc.token)
+
+		if tc.expectedErr != nil {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
+			assert.NotEmpty(t, resp)
+		}
+	}
+}
+
+func TestLogout(t *testing.T) {
+	type testCase struct {
+		name        string
+		token       string
+		mockFn      func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string)
+		expectedErr error
+	}
+
+	testCases := []testCase{
+		{
+			name:  "success",
+			token: "mock-refresh-token",
+			mockFn: func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string) {
+				mockTx.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(tx *sql.Tx) error) error {
+						return fn(nil)
+					},
+				).Times(1)
+
+				mockRepo.EXPECT().RevokedRefreshTokenTx(gomock.Any(), nil, token).Return(nil).Times(1)
+			},
+			expectedErr: nil,
+		},
+		{
+			name:  "fail revoked token",
+			token: "mock-refresh-token",
+			mockFn: func(mockTx *database.MockTxManager, mockToken *jwttoken.MockJWTToken, mockRepo *userrepository.MockUserRepository, token string) {
+				mockTx.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(tx *sql.Tx) error) error {
+						return fn(nil)
+					},
+				).Times(1)
+
+				mockRepo.EXPECT().RevokedRefreshTokenTx(gomock.Any(), nil, token).Return(ErrDB).Times(1)
+			},
+			expectedErr: ErrDB,
+		},
+	}
+
+	for _, tc := range testCases {
+		mockToken, mockTx, mockRepo, service := setup(t)
+
+		tc.mockFn(mockTx, mockToken, mockRepo, tc.token)
+
+		ctx := context.Background()
+		ctx = auth.SetContextUserID(ctx, "mock-uuid-1")
+
+		err := service.Logout(ctx, tc.token)
+
+		if tc.expectedErr != nil {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
 		}
 	}
 }

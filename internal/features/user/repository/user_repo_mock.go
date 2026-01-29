@@ -66,6 +66,21 @@ func (mr *MockUserRepositoryMockRecorder) FindUserByEmail(ctx, email interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserByEmail", reflect.TypeOf((*MockUserRepository)(nil).FindUserByEmail), ctx, email)
 }
 
+// FindUserByID mocks base method.
+func (m *MockUserRepository) FindUserByID(ctx context.Context, userID string) (*user.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindUserByID", ctx, userID)
+	ret0, _ := ret[0].(*user.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindUserByID indicates an expected call of FindUserByID.
+func (mr *MockUserRepositoryMockRecorder) FindUserByID(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserByID", reflect.TypeOf((*MockUserRepository)(nil).FindUserByID), ctx, userID)
+}
+
 // InsertRefreshTokenTx mocks base method.
 func (m *MockUserRepository) InsertRefreshTokenTx(ctx context.Context, tx *sql.Tx, token *user.RefreshToken) error {
 	m.ctrl.T.Helper()
@@ -92,4 +107,32 @@ func (m *MockUserRepository) InsertUserTx(ctx context.Context, tx *sql.Tx, u *us
 func (mr *MockUserRepositoryMockRecorder) InsertUserTx(ctx, tx, u interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertUserTx", reflect.TypeOf((*MockUserRepository)(nil).InsertUserTx), ctx, tx, u)
+}
+
+// RevokedRefreshTokenTx mocks base method.
+func (m *MockUserRepository) RevokedRefreshTokenTx(ctx context.Context, tx *sql.Tx, token string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RevokedRefreshTokenTx", ctx, tx, token)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RevokedRefreshTokenTx indicates an expected call of RevokedRefreshTokenTx.
+func (mr *MockUserRepositoryMockRecorder) RevokedRefreshTokenTx(ctx, tx, token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokedRefreshTokenTx", reflect.TypeOf((*MockUserRepository)(nil).RevokedRefreshTokenTx), ctx, tx, token)
+}
+
+// ValidateRefreshToken mocks base method.
+func (m *MockUserRepository) ValidateRefreshToken(ctx context.Context, token string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateRefreshToken", ctx, token)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateRefreshToken indicates an expected call of ValidateRefreshToken.
+func (mr *MockUserRepositoryMockRecorder) ValidateRefreshToken(ctx, token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateRefreshToken", reflect.TypeOf((*MockUserRepository)(nil).ValidateRefreshToken), ctx, token)
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-//go:generate mockgen -source=jwt.go -destination=jwt_mock.go -package=jwtToken
+//go:generate mockgen -source=jwt.go -destination=jwt_mock.go -package=jwttoken
 type JWTToken interface {
 	GenerateAccessToken(u *user.User) (string, error)
 	GenerateRefreshToken(u *user.User) (string, error)

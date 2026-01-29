@@ -6,6 +6,12 @@ MIGRATE_DB = "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NA
 run:
 	@go run cmd/api/main.go
 
+generate:
+	@go generate ./...
+
+test-logic:
+	@go test ./internal/features/*/service -cover
+
 #----------------- Start Docker -----------
 # -----------------------------------------
 # build db & app
