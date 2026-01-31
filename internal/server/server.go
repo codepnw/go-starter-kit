@@ -83,17 +83,18 @@ func (s *Server) registerUserRoutes() {
 	service := userservice.NewUserService(s.tx, s.token, repo)
 	handler := userhandler.NewUserHandler(service)
 	
-	// Public Routes
+	// Auth Routes
 	auth := s.router.Group("/auth")
 	{
 		auth.POST("/register", handler.Register)
 		auth.POST("/login", handler.Login)
+		auth.POST("/refresh-token", handler.RefreshToken)
+		
+		// Authorized
+		auth.POST("/logout", handler.Logout, s.mid.Authorized())
 	}
 	
-	// Private Routes
+	// Users Routes
 	users := s.router.Group("/users", s.mid.Authorized())
-	{
-		users.POST("/refresh-token", handler.RefreshToken)
-		users.POST("/logout", handler.Logout)
-	}
+	_ = users
 }
