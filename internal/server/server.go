@@ -96,5 +96,7 @@ func (s *Server) registerUserRoutes() {
 	
 	// Users Routes
 	users := s.router.Group("/users", s.mid.Authorized())
-	_ = users
+	{
+		users.GET("/profile", handler.GetProfile)
+	}
 }

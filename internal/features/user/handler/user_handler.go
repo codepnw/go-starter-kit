@@ -109,6 +109,20 @@ func (h *userHandler) Logout(c *gin.Context) {
 		}
 		return
 	}
-	
+
 	response.ResponseSuccess(c, http.StatusNoContent, nil)
+}
+
+func (h *userHandler) GetProfile(c *gin.Context) {
+	resp, err := h.service.GetProfile(c.Request.Context())
+	if err != nil {
+		switch err {
+		case errs.ErrUserNotFound:
+			response.ResponseError(c, http.StatusNotFound, err)
+		default:
+			response.ResponseError(c, http.StatusInternalServerError, err)
+		}
+		return
+	}
+	response.ResponseSuccess(c, http.StatusOK, resp)
 }

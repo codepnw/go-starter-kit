@@ -21,6 +21,7 @@ type UserService interface {
 	Login(ctx context.Context, email, password string) (*UserTokenResponse, error)
 	RefreshToken(ctx context.Context, token string) (*UserTokenResponse, error)
 	Logout(ctx context.Context, token string) error
+	GetProfile(ctx context.Context) (*user.User, error)
 }
 
 type userService struct {
@@ -135,18 +136,18 @@ func (s *userService) Login(ctx context.Context, email string, pwd string) (*Use
 func (s *userService) RefreshToken(ctx context.Context, token string) (*UserTokenResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.ContextTimeout)
 	defer cancel()
-	
+
 	// Validate Token
 	if err := s.repo.ValidateRefreshToken(ctx, token); err != nil {
 		return nil, err
 	}
-	
+
 	// Get UserID From Context
 	userID, err := auth.GetUserIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	userData, err := s.repo.FindUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -197,6 +198,22 @@ func (s *userService) Logout(ctx context.Context, token string) error {
 	}
 
 	return nil
+}
+
+func (s *userService) GetProfile(ctx context.Context) (*user.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.ContextTimeout)
+	defer cancel()
+
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userData, err := s.repo.FindUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return userData, nil
 }
 
 // ------------------ Private Method -------------------
