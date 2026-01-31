@@ -68,8 +68,8 @@ func NewServer(cfg *config.EnvConfig, db *sql.DB) (*Server, error) {
 	return s, nil
 }
 
-func (s *Server) Start(addr string) error {
-	return s.router.Run(addr)
+func (s *Server) Handler() http.Handler {
+	return s.router
 }
 
 func (s *Server) registerHealthRoutes() {
