@@ -60,10 +60,13 @@ func NewServer(cfg *config.EnvConfig, db *sql.DB) (*Server, error) {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-
+	
+	// Prefix Default: /api/v1
+	prefix := s.router.Group(cfg.APP.Prefix)
+	
 	// Register Routes
-	s.registerHealthRoutes()
-	s.registerUserRoutes()
+	s.registerHealthRoutes(prefix)
+	s.registerUserRoutes(prefix)
 
 	return s, nil
 }
@@ -72,30 +75,30 @@ func (s *Server) Handler() http.Handler {
 	return s.router
 }
 
-func (s *Server) registerHealthRoutes() {
-	s.router.GET("/health", func(c *gin.Context) {
+func (s *Server) registerHealthRoutes(r *gin.RouterGroup) {
+	r.GET("/health", func(c *gin.Context) {
 		response.ResponseSuccess(c, http.StatusOK, "Go Starter Kit Running...")
 	})
 }
 
-func (s *Server) registerUserRoutes() {
+func (s *Server) registerUserRoutes(r *gin.RouterGroup) {
 	repo := userrepository.NewUserRepository(s.db)
 	service := userservice.NewUserService(s.tx, s.token, repo)
 	handler := userhandler.NewUserHandler(service)
-	
+
 	// Auth Routes
-	auth := s.router.Group("/auth")
+	auth := r.Group("/auth")
 	{
 		auth.POST("/register", handler.Register)
 		auth.POST("/login", handler.Login)
 		auth.POST("/refresh-token", handler.RefreshToken)
-		
+
 		// Authorized
 		auth.POST("/logout", handler.Logout, s.mid.Authorized())
 	}
-	
+
 	// Users Routes
-	users := s.router.Group("/users", s.mid.Authorized())
+	users := r.Group("/users", s.mid.Authorized())
 	{
 		users.GET("/profile", handler.GetProfile)
 	}

@@ -30,8 +30,9 @@ type EnvConfig struct {
 }
 
 type AppConfig struct {
-	Host string `env:"HOST" envDefault:"localhost"`
-	Port int    `env:"PORT" envDefault:"8080"`
+	Host   string `env:"HOST" envDefault:"localhost"`
+	Port   int    `env:"PORT" envDefault:"8080"`
+	Prefix string `env:"PREFIX" envDefault:"/api/v1"`
 }
 
 type DBConfig struct {
