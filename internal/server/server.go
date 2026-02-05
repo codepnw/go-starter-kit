@@ -91,7 +91,7 @@ func (s *Server) registerUserRoutes(r *gin.RouterGroup) {
 	{
 		auth.POST("/register", handler.Register)
 		auth.POST("/login", handler.Login)
-		auth.POST("/refresh-token", handler.RefreshToken)
+		auth.POST("/refresh", handler.RefreshToken)
 
 		// Authorized
 		auth.POST("/logout", handler.Logout, s.mid.Authorized())
